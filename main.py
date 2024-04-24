@@ -1,6 +1,7 @@
 import keyboard
 import pyautogui
 import config
+import main_functions
 import stt
 import tts
 from fuzzywuzzy import fuzz
@@ -8,10 +9,13 @@ import datetime
 from num2words import num2words
 import webbrowser
 import random
+import sys
 
+
+import pygetwindow as gw
+from pytube import YouTube
 
 import ctypes
-from selenium import webdriver
 import pyautogui
 import time
 import requests
@@ -116,65 +120,23 @@ def recognize_cmd(cmd: str):
 
 def execute_cmd(cmd: str):
     if cmd == 'help':
-        # help
-        text = "Я умею: ..."
-        text += "произносить время ..."
-        text += "рассказывать анекдоты ..."
-        text += "и открывать браузер"
-        tts.va_speak(text)
-        pass
+        main_functions.help()
     elif cmd == 'ctime':
-        # current time
-        now = datetime.datetime.now()
-        text = num2words(now.hour, lang='ru') + " " + num2words(now.minute, lang='ru')
-        tts.va_speak(text)
-
-    elif cmd == 'joke':
-        jokes = ['Как смеются программисты? ... ехе ехе ехе',
-                 'ЭсКьюЭль запрос заходит в бар, подходит к двум столам и спрашивает .. «м+ожно присоединиться?»',
-                 'Программист это машина для преобразования кофе в код']
-
-        tts.va_speak(random.choice(jokes))
-
+        main_functions.time()
     elif cmd == 'return_tab':
-        keyboard.press_and_release('ctrl + shift + t')
-
+        main_functions.return_tab()
     elif cmd == 'close_tab':
-        keyboard.press_and_release('ctrl + w')
-
+        main_functions.close_tab()
     elif cmd == "Alt+F4":
-        keyboard.press_and_release('alt + f4')
-
-
-    elif cmd == 'search':
-        query = voice2
-        search_cmd_list = config.VA_CMD_LIST["search"]  # Получаем список тригерных слов
-        if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "search2" кортежем
-            for search_cmd in search_cmd_list:
-                if search_cmd in query:
-                    # Удаляем триггерные слова и все что было до них
-                    query = query.split(search_cmd)[-1].strip()
-                    break
-
-        search_terms = "+".join(query.split())
-        url = "https://google.com/search?q=" + search_terms
-        webbrowser.open(url)
-
-        # query = voice2
-        # search_cmd_list = config.VA_CMD_LIST["search"] # Получаем список тригерных слов
-        # if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "search2" кортежем
-        #     for search_cmd in search_cmd_list:
-        #         if search_cmd in query:
-        #             query = query.replace("эврика","")
-        #             query = query.replace(search_cmd, "", 1)  # Удаляем только первое вхождение триггерного слова
-        #             break
-        # search_terms = "+".join(query.split())
-        # url = "https://google.com/search?q=" + search_terms
-        # webbrowser.open(url)
+        main_functions.AltF4()
+    elif cmd == 'search_google':
+        main_functions.search_google(voice2)
     elif cmd == "search_prog":
-        pyautogui.keyDown('alt')
-        pyautogui.press('tab')
-        pyautogui.keyUp('alt')
+        main_functions.search_prog()
+    elif cmd == 'search_youtube':
+        main_functions.search_youtube(voice2)
+    elif cmd == "Off_Eureka":
+        main_functions.Off_Eureka()
 
 # начать прослушивание команд
 stt.va_listen(va_respond)
