@@ -1,5 +1,5 @@
 import keyboard
-
+import pyautogui
 import config
 import stt
 import tts
@@ -8,8 +8,10 @@ import datetime
 from num2words import num2words
 import webbrowser
 import random
-from selenium import webdriver
 
+
+import ctypes
+from selenium import webdriver
 import pyautogui
 import time
 import requests
@@ -137,9 +139,11 @@ def execute_cmd(cmd: str):
     elif cmd == 'return_tab':
         keyboard.press_and_release('ctrl + shift + t')
 
-
     elif cmd == 'close_tab':
         keyboard.press_and_release('ctrl + w')
+
+    elif cmd == "Alt+F4":
+        keyboard.press_and_release('alt + f4')
 
 
     elif cmd == 'search':
@@ -167,7 +171,10 @@ def execute_cmd(cmd: str):
         # search_terms = "+".join(query.split())
         # url = "https://google.com/search?q=" + search_terms
         # webbrowser.open(url)
-
+    elif cmd == "search_prog":
+        pyautogui.keyDown('alt')
+        pyautogui.press('tab')
+        pyautogui.keyUp('alt')
 
 # начать прослушивание команд
 stt.va_listen(va_respond)
