@@ -132,11 +132,15 @@ def execute_cmd(cmd: str):
         main_functions.search_google(voice2)
     elif cmd == "search_prog":
         main_functions.search_prog()
-    elif cmd == 'search_youtube':
+    elif cmd == 'youtube':
         main_functions.search_youtube(voice2)
     elif cmd == "Off_Eureka":
         main_functions.Off_Eureka()
     elif cmd == "gpt":
         main_functions.main_gpt(voice2)
+    elif cmd == "music":
+        main_functions.music(voice2)
+
+
 # начать прослушивание команд
 stt.va_listen(va_respond)
