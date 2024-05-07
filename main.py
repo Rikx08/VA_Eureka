@@ -10,11 +10,8 @@ from num2words import num2words
 import webbrowser
 import random
 import sys
-
-
 import pygetwindow as gw
 from pytube import YouTube
-
 import ctypes
 import pyautogui
 import time
@@ -25,6 +22,7 @@ from bs4 import BeautifulSoup
 
 print(f"{config.VA_NAME} (v{config.VA_VER}) начала свою работу ...")
 voice2 = ""
+
 # def contains_trigger_word(voice):
 #     for word in config.VA_ALIAS:
 #         if word in voice:
@@ -87,6 +85,7 @@ def va_respond(voice: str):
     global voice2
     voice2 = voice
 
+
     if contains_trigger_word(voice):
         cmd = recognize_cmd(filter_cmd(voice))
 
@@ -137,6 +136,7 @@ def execute_cmd(cmd: str):
         main_functions.search_youtube(voice2)
     elif cmd == "Off_Eureka":
         main_functions.Off_Eureka()
-
+    elif cmd == "gpt":
+        main_functions.main_gpt(voice2)
 # начать прослушивание команд
 stt.va_listen(va_respond)
