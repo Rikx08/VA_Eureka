@@ -20,7 +20,6 @@ def va_respond(voice: str):
     global voice2
     voice2 = voice
 
-
     if contains_trigger_word(voice):
         cmd = recognize_cmd(filter_cmd(voice))
 
@@ -43,13 +42,11 @@ def filter_cmd(raw_voice: str):
 def recognize_cmd(cmd: str):
     rc = {'cmd': '', 'percent': 0}
     for c, v in config.VA_CMD_LIST.items():
-
         for x in v:
             vrt = fuzz.ratio(cmd, x)
             if vrt > rc['percent']:
                 rc['cmd'] = c
                 rc['percent'] = vrt
-
     return rc
 
 def execute_cmd(cmd: str):
@@ -72,7 +69,11 @@ def execute_cmd(cmd: str):
     elif cmd == "gpt":
         main_functions.main_gpt(voice2)
     elif cmd == "music":
-        main_functions.music(voice2)
+        main_functions.music_player.search_music(voice2)
+    elif cmd == "next_track":
+        main_functions.music_player.next_track()
+    elif cmd == "previous_track":
+        main_functions.music_player.previous_track()
     elif cmd == "notes":
         main_functions.notes(voice2)
     elif cmd == "conductor":
@@ -94,10 +95,14 @@ def execute_cmd(cmd: str):
     elif cmd == "set_audio_columns":
         main_functions.set_audio_columns("PHL 223V7")
     elif cmd == "timer":
-        main_functions.timer(voice2)
+        main_functions.start_timer(voice2)
     elif cmd == "set_alarm":
         main_functions.set_alarm(voice2)
     elif cmd == "Off_Eureka":
         main_functions.Off_Eureka()
-# начать прослушивание команд
+
+
 stt.va_listen(va_respond)
+
+
+

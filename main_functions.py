@@ -1,3 +1,4 @@
+import re
 import keyboard
 import config
 import tts
@@ -14,9 +15,15 @@ from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume,ISimpleAudioVolume
 from word2number import w2n
 from translate import Translator
+import time
+import winsound
 import win32com.client
-
-
+import threading
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 def help():
     text = "Я умею: ..."
     text += "произносить время ..."
@@ -97,6 +104,10 @@ def process_user_input(user_input):
     assistant_response = gpt_model(messages=messages)
     return assistant_response
 
+def replace_numbers_with_words(match):
+    number = int(match.group())
+    return num2words(number, lang='ru')
+
 def main_gpt(voice2):
     query = voice2
     search_cmd_list = config.VA_CMD_LIST["gpt"]  # Получаем список тригерных слов
@@ -109,31 +120,69 @@ def main_gpt(voice2):
 
     user_input = query
     assistant_response = process_user_input(user_input)
-    print("Assistant:", assistant_response)
 
-def music(voice2):
-    query = voice2
-    search_cmd_list = config.VA_CMD_LIST["music"]  # Получаем список тригерных слов
-    if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "music" кортежем
-        for search_cmd in search_cmd_list:
-            if search_cmd in query:
-                # Удаляем триггерные слова и все что было до них
-                query = query.split(search_cmd)[-1].strip()
-                break
-
-    # Выполнить поиск на YouTube
-    results = YoutubeSearch(query, max_results=1).to_dict()
-
-    if results:  # Убедиться, что найден хотя бы один результат
-        video_id = results[0]['id']
-
-        # Сформировать URL для открытия видео
-        url = f"https://music.youtube.com/watch?v={video_id}"
-
-        # Открыть URL в браузере
-        webbrowser.open(url)
+    # Проверка наличия чисел в строке
+    if re.search(r'\d+', assistant_response):
+        # Замена чисел на слова
+        new_text = re.sub(r'\d+', replace_numbers_with_words, assistant_response)
     else:
-        print("Ничего не найдено на YouTube по вашему запросу.")
+        # Если чисел нет, оставляем строку без изменений
+        new_text = assistant_response
+    print("Assistant:", new_text)
+    tts.va_speak(new_text)
+
+
+class MusicPlayer:
+    def __init__(self):
+        self.tracks = []
+        self.current_index = 0
+
+    def search_music(self, query):
+        search_cmd_list = config.VA_CMD_LIST["music"]  # Получаем список тригерных слов
+        if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "music" кортежем
+            for search_cmd in search_cmd_list:
+                if search_cmd in query:
+                    # Удаляем триггерные слова и все что было до них
+                    query = query.split(search_cmd)[-1].strip()
+                    break
+
+        # Выполнить поиск на YouTube
+        results = YoutubeSearch(query, max_results=5).to_dict()
+
+        if results:  # Убедиться, что найдены результаты
+            self.tracks = [{'title': result['title'], 'video_id': result['id']} for result in results]
+            self.current_index = 0
+            self.play_current_track()
+        else:
+            print("Ничего не найдено на YouTube по вашему запросу.")
+
+    def play_current_track(self):
+        if self.tracks:
+            video_id = self.tracks[self.current_index]['video_id']
+            url = f"https://music.youtube.com/watch?v={video_id}"
+            webbrowser.open(url)
+            print(f"Сейчас играет: {self.tracks[self.current_index]['title']}")
+        else:
+            print("Нет треков для воспроизведения.")
+
+    def next_track(self):
+        keyboard.press_and_release('ctrl + w')
+        if self.tracks:
+            self.current_index = (self.current_index + 1) % len(self.tracks)
+            self.play_current_track()
+        else:
+            print("Нет треков для переключения.")
+
+    def previous_track(self):
+        keyboard.press_and_release('ctrl + w')
+        if self.tracks:
+            self.current_index = (self.current_index - 1) % len(self.tracks)
+            self.play_current_track()
+        else:
+            print("Нет треков для переключения.")
+
+# Пример использования
+music_player = MusicPlayer()
 
 def notes(voice2):
     query = voice2
@@ -160,13 +209,10 @@ def notes(voice2):
 
     else:                                        # Если файл не существует, начинаем с первой строки
         line_number = 1
-
     with open(file_path, 'a') as file:   # Запись текста в файл
-        if line_number > 1:
-                                                 # Если файл уже существует, добавляем перевод строки перед новой записью
+        if line_number > 1:                      # Если файл уже существует, добавляем перевод строки перед новой записью
             file.write('\n')
         file.write(f"{line_number}. {text_to_write}")
-
     print(f"Строка успешно добавлена в файл {file_name} на рабочем столе.")
 
 def conductor():
@@ -200,7 +246,7 @@ def volume_max():
     # Получение текущей громкости
     current_volume = volume.GetMasterVolumeLevelScalar()
 
-    # Установка новой громкости ( увеличиваем на 10%)
+    # Установка новой громкости (увеличиваем на 10%)
     new_volume = min(1.0, current_volume + 0.1)
     volume.SetMasterVolumeLevelScalar(new_volume, None)
 
@@ -214,7 +260,7 @@ def volume_min():
     # Получение текущей громкости
     current_volume = volume.GetMasterVolumeLevelScalar()
 
-    # Установка новой громкости ( уменьшаем  на 10%)
+    # Установка новой громкости (уменьшаем на 10%)
     new_volume = max(0.0, current_volume - 0.1)
     volume.SetMasterVolumeLevelScalar(new_volume, None)
 
@@ -280,39 +326,46 @@ def set_alarm(voice2):
     sp = english_translation.split()
 
 
-    hour = str(w2n.word_to_num(sp[0]))  # Преобразуйте часы в строку
+    hour = str(w2n.word_to_num(sp[0]))
     minute = str(w2n.word_to_num(sp[1]))
 
 
-    try:
-        # Создаем экземпляр объекта WScript.Shell
-        shell = win32com.client.Dispatch("WScript.Shell")
-        # Запускаем приложение "Часы"
-        shell.Run("ms-clock:")
-        # Подтверждаем активацию окна "Часы"
-        shell.AppActivate("Часы")
-        # Закрываем предыдущее окно будильников, если оно открыто
-        shell.SendKeys("%{F4}")
-        # Открываем вкладку с будильниками
-        shell.SendKeys("^{2}")
-        # Добавляем новый будильник
-        shell.SendKeys("%{a}")
-        # Переходим к полю ввода часов
-        shell.SendKeys("%(h)")
-        # Вводим часы
-        shell.SendKeys(hour)  # Предполагается, что переменная `hour` уже определена
-        # Переходим к полю ввода минут
-        shell.SendKeys("{TAB}")
-        # Вводим минуты
-        shell.SendKeys(minute)  # Предполагается, что переменная `minute` уже определена
-        # Нажимаем Enter для сохранения будильника
-        shell.SendKeys("{ENTER}")
-    except Exception as e:
-        print("Ошибка:", e)
 
 
-def timer(voice2):
-    None
+def timer_thread(duration):
+    time.sleep(duration)
+    winsound.Beep(1000, 1000)
+
+def start_timer(voice2):
+    query = voice2
+    search_cmd_list = config.VA_CMD_LIST["timer"]  # Получаем список триггерных слов
+    if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "timer" кортежем
+        for search_cmd in search_cmd_list:
+            if search_cmd in query:
+                # Удаляем триггерные слова и все что было до них
+                query = query.split(search_cmd)[-1].strip()
+                break
+
+    print(query)
+    # Разделяем строку на слова и ищем числовые слова
+    words = query.split()
+    int_c = None
+    for word in words:
+        try:
+            query_as_number = w2n.word_to_num(word)
+            int_c = query_as_number
+            break
+        except ValueError:
+            continue
+
+    if int_c is not None:
+        print(int_c)
+        # Создаем и запускаем поток с будильником
+        alarm_thread = threading.Thread(target=timer_thread, args=(int_c,))
+        alarm_thread.start()
+    else:
+        print("Не удалось преобразовать числовое слово в число.")
+
 
 def Off_Eureka():
     sys.exit()  # Остановить выполнение программы
