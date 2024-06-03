@@ -1,5 +1,7 @@
+import random
 import re
 import keyboard
+from pydub import AudioSegment
 import config
 import tts
 import datetime
@@ -17,13 +19,22 @@ from word2number import w2n
 from translate import Translator
 import time
 import winsound
-import win32com.client
+from pydub.playback import play
 import threading
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+
+
+def voice_acting():
+    folder_path = 'saund/agreement'
+    # Получаем список всех файлов в папке
+    files = [i for i in os.listdir(folder_path) if i.endswith('.mp3')]
+    # Выбираем случайный файл
+    random_file = random.choice(files)
+    # Полный путь к выбранному файлу
+    file_path = os.path.join(folder_path, random_file)
+    # Загружаем и воспроизводим аудиофайл
+    sound = AudioSegment.from_wav(file_path)
+    play(sound)
+
 def help():
     text = "Я умею: ..."
     text += "произносить время ..."
@@ -38,16 +49,20 @@ def time():
     tts.va_speak(text)
 
 def return_tab():
-
+    voice_acting()
     keyboard.press_and_release('ctrl + shift + t')
 
 def close_tab():
+    voice_acting()
     keyboard.press_and_release('ctrl + w')
 
 def AltF4():
+    voice_acting()
     keyboard.press_and_release('alt + f4')
 
 def search_google(voice2):
+    sound = AudioSegment.from_wav('saund/comments/app_sound_jarvis-og_ok2.mp3')
+    play(sound)
     query = voice2
     search_cmd_list = config.VA_CMD_LIST["search_google"]  # Получаем список тригерных слов
     if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "search_google" кортежем
@@ -62,6 +77,7 @@ def search_google(voice2):
     webbrowser.open(url)
 
 def search_prog():
+    voice_acting()
     # Эмуляция нажатия клавиши Alt
     keyboard.press('alt')
     # Эмуляция нажатия клавиши Tab
@@ -70,6 +86,7 @@ def search_prog():
     keyboard.release('alt')
 
 def search_youtube(voice2):
+    voice_acting()
     query = voice2
     search_cmd_list = config.VA_CMD_LIST["youtube"]  # Получаем список тригерных слов
     if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "youtube" кортежем
@@ -97,7 +114,7 @@ def gpt_model(messages: list):
     response = g4f.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages)
-    return response
+    return response['choices'][0]['message']['content']
 
 def process_user_input(user_input):
     messages = [{"role": "user", "content": user_input}]
@@ -109,12 +126,13 @@ def replace_numbers_with_words(match):
     return num2words(number, lang='ru')
 
 def main_gpt(voice2):
+    voice_acting()
     query = voice2
-    search_cmd_list = config.VA_CMD_LIST["gpt"]  # Получаем список тригерных слов
+    search_cmd_list = config.VA_CMD_LIST["gpt"]  # Получаем список триггерных слов
     if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "gpt" кортежем
         for search_cmd in search_cmd_list:
             if search_cmd in query:
-                # Удаляем триггерные слова и все что было до них
+                # Удаляем триггерные слова и все, что было до них
                 query = query.split(search_cmd)[-1].strip()
                 break
 
@@ -128,9 +146,8 @@ def main_gpt(voice2):
     else:
         # Если чисел нет, оставляем строку без изменений
         new_text = assistant_response
-    print("Assistant:", new_text)
+    print("Ассистент:", new_text)
     tts.va_speak(new_text)
-
 
 class MusicPlayer:
     def __init__(self):
@@ -185,6 +202,7 @@ class MusicPlayer:
 music_player = MusicPlayer()
 
 def notes(voice2):
+    voice_acting()
     query = voice2
     search_cmd_list = config.VA_CMD_LIST["notes"]  # Получаем список тригерных слов
     if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "search_google" кортежем
@@ -216,10 +234,11 @@ def notes(voice2):
     print(f"Строка успешно добавлена в файл {file_name} на рабочем столе.")
 
 def conductor():
+    voice_acting()
     keyboard.press_and_release('win + e')
 
 def open_Pycharm():
-
+    voice_acting()
     try:
         subprocess.Popen(["C:\\Program Files\\JetBrains\\PyCharm Community Edition 2023.2.1\\bin\\pycharm64.exe"])
         return True
@@ -228,7 +247,7 @@ def open_Pycharm():
         return False
 
 def open_Steam():
-
+    voice_acting()
     try:
         subprocess.Popen(["C:\\Program Files (x86)\\Steam\\steam.exe"])
         return True
@@ -237,6 +256,7 @@ def open_Steam():
         return False
 
 def volume_max():
+    voice_acting()
     # Получение объекта для управления звуком текущего устройства воспроизведения
     devices = AudioUtilities.GetSpeakers()
     interface = devices.Activate(
@@ -251,6 +271,7 @@ def volume_max():
     volume.SetMasterVolumeLevelScalar(new_volume, None)
 
 def volume_min():
+    voice_acting()
     # Получение объекта для управления звуком текущего устройства воспроизведения
     devices = AudioUtilities.GetSpeakers()
     interface = devices.Activate(
@@ -270,6 +291,7 @@ def translate_word(word, source_lang, target_lang):
     return translation
 
 def Mega_volume(voice2):
+    voice_acting()
     query = voice2
     search_cmd_list = config.VA_CMD_LIST["Mega_volume"]  # Получаем список тригерных слов
     if isinstance(search_cmd_list, tuple):  # Проверяем, является ли значение для "Mega_volume" кортежем
@@ -297,12 +319,14 @@ def Mega_volume(voice2):
     volume.SetMasterVolumeLevelScalar(new_volume, None)
 
 def volume_on():
+    voice_acting()
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
         volume = cast(session._ctl.QueryInterface(ISimpleAudioVolume), POINTER(ISimpleAudioVolume))
         volume.SetMute(0, None)
 
 def volume_off():
+    voice_acting()
     sessions = AudioUtilities.GetAllSessions()
     for session in sessions:
         volume = cast(session._ctl.QueryInterface(ISimpleAudioVolume), POINTER(ISimpleAudioVolume))
@@ -328,9 +352,6 @@ def set_alarm(voice2):
 
     hour = str(w2n.word_to_num(sp[0]))
     minute = str(w2n.word_to_num(sp[1]))
-
-
-
 
 def timer_thread(duration):
     time.sleep(duration)
@@ -368,4 +389,6 @@ def start_timer(voice2):
 
 
 def Off_Eureka():
-    sys.exit()  # Остановить выполнение программы
+    sound = AudioSegment.from_wav('saund/shutdown and restart/app_sound_jarvis-og_off.mp3')
+    play(sound)
+    sys.exit()
